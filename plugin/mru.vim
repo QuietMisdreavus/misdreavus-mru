@@ -65,7 +65,7 @@ function! s:print_mru(w, print_count)
         else
             let flag = ' '
         endif
-        let buf_display = flag . b . ':'
+        let buf_display = flag . b . ":\t"
 
         echo buf_display bufname(b)
 
