@@ -82,3 +82,8 @@ The MRU tracking is enabled by default when the plugin is loaded. To disable thi
 
 To enable or disable the plugin after it's loaded, the commands `:EnableMru` and `:DisableMru` are
 available.
+
+## license
+
+This code is available under the Mozilla Public License, version 2.0. For more information, see the
+`LICENSE` file.
