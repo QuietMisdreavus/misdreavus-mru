@@ -28,23 +28,36 @@ function! s:include_buf_in_list(b)
     return v:true
 endfunction
 
-function! s:push_buf(b)
-    call filter(g:misdreavus_mru, {idx, val -> val != a:b})
-    call insert(g:misdreavus_mru, a:b)
+function! s:push_buf(w, b)
+    if !has_key(g:misdreavus_mru, a:w)
+        let g:misdreavus_mru[a:w] = []
+    endif
+    let mru_list = g:misdreavus_mru[a:w]
+
+    call filter(mru_list, {idx, val -> val != a:b})
+    call insert(mru_list, a:b)
 endfunction
 
-function! s:leave_buf()
-    call filter(g:misdreavus_mru, {idx, val -> s:include_buf_in_list(val)})
+function! s:leave_buf(w)
+    if has_key(g:misdreavus_mru, a:w)
+        call filter(g:misdreavus_mru[a:w], {idx, val -> s:include_buf_in_list(val)})
+    endif
 endfunction
 
-function! s:print_mru(print_count)
+function! s:print_mru(w, print_count)
+    if !has_key(g:misdreavus_mru, a:w)
+        echo 'No MRU list available for the current window'
+        return
+    endif
+
+    let mru_list = g:misdreavus_mru[a:w]
     let print_count = a:print_count
     if print_count == 0
-        let print_count = len(g:misdreavus_mru)
+        let print_count = len(mru_list)
     endif
     let printed = 0
 
-    for b in g:misdreavus_mru
+    for b in mru_list
         if b == bufnr()
             let flag = '%'
         elseif b == bufnr('#')
@@ -64,7 +77,14 @@ function! s:print_mru(print_count)
 endfunction
 
 function! RotateMru()
-    let len = len(g:misdreavus_mru)
+    let w = winnr()
+
+    if !has_key(g:misdreavus_mru, w)
+        return
+    endif
+    let mru_list = g:misdreavus_mru[w]
+
+    let len = len(mru_list)
     let rot = g:misdreavus_mru_rotate_count
 
     if rot <= 0
@@ -72,9 +92,9 @@ function! RotateMru()
     endif
 
     if rot <= len
-        let b = g:misdreavus_mru[rot - 1]
+        let b = mru_list[rot - 1]
     elseif len > 0
-        let b = g:misdreavus_mru[-1]
+        let b = mru_list[-1]
     else
         return
     endif
@@ -84,7 +104,7 @@ endfunction
 
 function! s:enable_mru()
     if !exists('g:misdreavus_mru')
-        let g:misdreavus_mru = []
+        let g:misdreavus_mru = {}
     endif
 
     if !exists('g:misdreavus_mru_rotate_count')
@@ -94,8 +114,8 @@ function! s:enable_mru()
     augroup MisdreavusMru
         autocmd!
 
-        autocmd BufEnter * call <sid>push_buf(bufnr())
-        autocmd BufLeave * call <sid>leave_buf()
+        autocmd BufEnter * call <sid>push_buf(winnr(), bufnr())
+        autocmd BufLeave * call <sid>leave_buf(winnr())
     augroup END
 endfunction
 
@@ -111,7 +131,7 @@ if !exists('g:misdreavus_mru_no_auto_enable')
     call s:enable_mru()
 endif
 
-command! -count Mru call <sid>print_mru(<count>)
+command! -count Mru call <sid>print_mru(winnr(), <count>)
 command! EnableMru call <sid>enable_mru()
 command! DisableMru call <sid>disable_mru()
 
