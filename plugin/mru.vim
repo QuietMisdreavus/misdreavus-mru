@@ -33,6 +33,10 @@ function! s:include_buf_in_list(b)
 endfunction
 
 function! s:push_buf(w, b)
+    if !exists('g:misdreavus_mru')
+        return
+    endif
+
     if !has_key(g:misdreavus_mru, a:w)
         let g:misdreavus_mru[a:w] = []
     endif
@@ -43,12 +47,16 @@ function! s:push_buf(w, b)
 endfunction
 
 function! s:leave_buf(w)
-    if has_key(g:misdreavus_mru, a:w)
+    if exists('g:misdreavus_mru') && has_key(g:misdreavus_mru, a:w)
         call filter(g:misdreavus_mru[a:w], {idx, val -> s:include_buf_in_list(val)})
     endif
 endfunction
 
 function! s:print_mru(w, print_count)
+    if !exists('g:misdreavus_mru')
+        return
+    endif
+
     if !has_key(g:misdreavus_mru, a:w)
         echo 'No MRU list available for the current window'
         return
@@ -81,6 +89,10 @@ function! s:print_mru(w, print_count)
 endfunction
 
 function! RotateMru()
+    if !exists('g:misdreavus_mru')
+        return
+    endif
+
     let w = winnr()
 
     if !has_key(g:misdreavus_mru, w)
