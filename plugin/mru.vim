@@ -63,9 +63,32 @@ function! s:print_mru(print_count)
     endfor
 endfunction
 
+function! RotateMru()
+    let len = len(g:misdreavus_mru)
+    let rot = g:misdreavus_mru_rotate_count
+
+    if rot <= 0
+        return
+    endif
+
+    if rot <= len
+        let b = g:misdreavus_mru[rot - 1]
+    elseif len > 0
+        let b = g:misdreavus_mru[-1]
+    else
+        return
+    endif
+
+    execute "buffer" b
+endfunction
+
 function! s:enable_mru()
     if !exists('g:misdreavus_mru')
         let g:misdreavus_mru = []
+    endif
+
+    if !exists('g:misdreavus_mru_rotate_count')
+        let g:misdreavus_mru_rotate_count = 3
     endif
 
     augroup MisdreavusMru
@@ -91,3 +114,5 @@ endif
 command! -count Mru call <sid>print_mru(<count>)
 command! EnableMru call <sid>enable_mru()
 command! DisableMru call <sid>disable_mru()
+
+nnoremap <Plug>RotateMru :call RotateMru()<CR>
