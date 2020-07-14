@@ -93,7 +93,7 @@ function! RotateMru()
         return
     endif
 
-    let w = winnr()
+    let w = win_getid()
 
     if !has_key(g:misdreavus_mru, w)
         return
@@ -130,8 +130,8 @@ function! s:enable_mru()
     augroup MisdreavusMru
         autocmd!
 
-        autocmd BufEnter * call <sid>push_buf(winnr(), bufnr())
-        autocmd BufLeave * call <sid>leave_buf(winnr())
+        autocmd BufEnter * call <sid>push_buf(win_getid(), bufnr())
+        autocmd BufLeave * call <sid>leave_buf(win_getid())
     augroup END
 endfunction
 
@@ -147,7 +147,7 @@ if !exists('g:misdreavus_mru_no_auto_enable')
     call s:enable_mru()
 endif
 
-command! -count Mru call <sid>print_mru(winnr(), <count>)
+command! -count Mru call <sid>print_mru(win_getid(), <count>)
 command! EnableMru call <sid>enable_mru()
 command! DisableMru call <sid>disable_mru()
 

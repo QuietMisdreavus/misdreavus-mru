@@ -58,20 +58,20 @@ nmap <C-_> <Plug>RotateMru
 
 [`ghostline`] is integrated with this plugin, to show the top N buffers to the far-left of the
 tabline. It does this by accessing the `g:misdreavus_mru` dict, which tracks the MRU lists using the
-window numbers as keys. The values in the dict are lists of buffer numbers. For example, this is how
-the list might look at one given moment:
+window IDs as keys. The values in the dict are lists of buffer numbers. For example, this is how the
+list might look at one given moment:
 
 ```
 {
-    '1': [17, 1, 16, 4, 15, 9],
-    '2': [1],
-    '3': [3]
+    '1000': [17, 1, 16, 4, 15, 9],
+    '1001': [1],
+    '1002': [3]
 }
 ```
 
 [`ghostline`]: https://github.com/QuietMisdreavus/ghostline
 
-By checking `g:misdreavus_mru[winnr()]`, you can access the list and use the buffer numbers to
+By checking `g:misdreavus_mru[win_getid()]`, you can access the list and use the buffer numbers to
 populate a display list.
 
 ## enabling/disabling
