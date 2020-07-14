@@ -5,7 +5,8 @@ been loaded most recently in a given window and allows you to recall and "rotate
 
 ## how to install
 
-uh, if anyone wants this, let me know and i'll extract it into its own repo `>_>`
+Point your preferred plugin manager to `'QuietMisdreavus/misdreavus-mru'` or clone the repo into
+your `pack/` directory, or whatever you do to add vim plugins to your config.
 
 ## how to use
 
@@ -55,10 +56,10 @@ nmap <C-_> <Plug>RotateMru
 
 ## integrating it with displays
 
-I currently have this integrated with my custom tabline, to show the top N buffers to the far-left
-of the tabline. It does this by accessing the `g:misdreavus_mru` dict, which tracks the MRU lists
-using the window numbers as keys. The values in the dict are lists of buffer numbers. For example,
-this is how the list might look at one given moment:
+[`ghostline`] is integrated with this plugin, to show the top N buffers to the far-left of the
+tabline. It does this by accessing the `g:misdreavus_mru` dict, which tracks the MRU lists using the
+window numbers as keys. The values in the dict are lists of buffer numbers. For example, this is how
+the list might look at one given moment:
 
 ```
 {
@@ -68,12 +69,10 @@ this is how the list might look at one given moment:
 }
 ```
 
+[`ghostline`]: https://github.com/QuietMisdreavus/ghostline
+
 By checking `g:misdreavus_mru[winnr()]`, you can access the list and use the buffer numbers to
 populate a display list.
-
-To see this in action, see the file [`plugin/tabline.vim`] in my vimfiles repo.
-
-[`plugin/tabline.vim`]: https://github.com/QuietMisdreavus/vimfiles/blob/6ff4ba20fe21af0e13c189ef10420fd044e9a052/plugin/tabline.vim
 
 ## enabling/disabling
 
