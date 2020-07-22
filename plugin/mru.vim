@@ -5,7 +5,7 @@
 " License, v. 2.0. If a copy of the MPL was not distributed with this
 " file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-function! s:include_buf_in_list(b)
+function! s:include_buf_in_list(w, b)
     " never list buffers that have been deleted
     if !bufexists(a:b)
         return v:false
@@ -17,6 +17,14 @@ function! s:include_buf_in_list(b)
             return v:true
         endif
     endfor
+
+    " if any buffer in the given window's MRU list is a help file, keep any other help file
+    exe 'let list_has_help = ' . copy(g:misdreavus_mru[a:w])
+        \ ->map({_, val -> getbufvar(val, '&buftype') == 'help'})
+        \ ->join(' || ')
+    if list_has_help && getbufvar(a:b, '&buftype') == 'help'
+        return v:true
+    endif
 
     " if a buffer isn't listed in `:ls`, don't list it in `:Mru`
     if !buflisted(a:b)
@@ -48,7 +56,7 @@ endfunction
 
 function! s:leave_buf(w)
     if exists('g:misdreavus_mru') && has_key(g:misdreavus_mru, a:w)
-        call filter(g:misdreavus_mru[a:w], {idx, val -> s:include_buf_in_list(val)})
+        call filter(g:misdreavus_mru[a:w], {idx, val -> s:include_buf_in_list(a:w, val)})
     endif
 endfunction
 
