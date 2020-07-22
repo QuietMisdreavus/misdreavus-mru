@@ -52,6 +52,14 @@ function! s:leave_buf(w)
     endif
 endfunction
 
+function! s:delete_buf(b)
+    if exists('g:misdreavus_mru')
+        for buflist in values(g:misdreavus_mru)
+            call filter(buflist, {_, val -> val != a:b})
+        endfor
+    endif
+endfunction
+
 function! s:print_mru(w, print_count)
     if !exists('g:misdreavus_mru')
         return
@@ -132,6 +140,7 @@ function! s:enable_mru()
 
         autocmd BufEnter * call <sid>push_buf(win_getid(), bufnr())
         autocmd BufLeave * call <sid>leave_buf(win_getid())
+        autocmd BufDelete * call <sid>delete_buf(expand("<abuf>"))
     augroup END
 endfunction
 
