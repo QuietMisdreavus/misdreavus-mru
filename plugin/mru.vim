@@ -65,6 +65,15 @@ function! s:delete_buf(b)
         for buflist in values(g:misdreavus_mru)
             call filter(buflist, {_, val -> val != a:b})
         endfor
+
+        call filter(g:misdreavus_mru, '!empty(v:val)')
+    endif
+endfunction
+
+function! s:clean_mru()
+    if exists('g:misdreavus_mru')
+        " don't keep MRU lists for windows that don't exists any more
+        call filter(g:misdreavus_mru, 'win_id2win(v:key) != 0')
     endif
 endfunction
 
@@ -149,6 +158,7 @@ function! s:enable_mru()
         autocmd BufEnter * call <sid>push_buf(win_getid(), bufnr())
         autocmd BufLeave * call <sid>leave_buf(win_getid())
         autocmd BufDelete * call <sid>delete_buf(expand("<abuf>"))
+        autocmd WinEnter * call <sid>clean_mru()
     augroup END
 endfunction
 
