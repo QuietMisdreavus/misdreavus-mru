@@ -143,6 +143,102 @@ function! RotateMru()
     execute "buffer" b
 endfunction
 
+function! s:save_mru_session()
+    if !exists('g:misdreavus_mru')
+        unlet! g:MisdreavusSessionMru
+        return
+    endif
+
+    let g:MisdreavusSessionMru = SaveMruSession(g:misdreavus_mru)
+endfunction
+
+function! s:load_mru_session()
+    if !exists('g:MisdreavusSessionMru')
+        return
+    endif
+
+    let g:misdreavus_mru = LoadMruSession(g:MisdreavusSessionMru)
+    unlet g:MisdreavusSessionMru
+
+    " set the alternate file on windows with MRU lists
+    let curwin = win_getid()
+    tabdo windo call s:restore_alt_file()
+    call win_gotoid(curwin)
+endfunction
+
+function! s:restore_alt_file()
+    let wid = win_getid()
+    if has_key(g:misdreavus_mru, wid) && len(g:misdreavus_mru[wid]) > 1
+        " if the MRU list for this window has a second entry, set the alternate file to that
+        let @# = g:misdreavus_mru[wid][1]
+    else
+        " otherwise, clear out the erroneous alternate file that came out of the session file
+        " see https://github.com/vim/vim/issues/6714
+        let @# = @%
+    endif
+endfunction
+
+function! SaveMruSession(mru)
+    " session_mru is a dict mapping buffer names to lists of other buffer names.
+    " the idea is that if a buffer is visible under several windows, they'll have distinct MRU
+    " lists, so it's worth it to save them separately. by taking each 'visible buffer' and mapping
+    " over its window IDs, we can pop off the MRU lists in order and repopulate them after loading
+    " the session back up.
+    let session_mru = {}
+
+    for [winid, bufs] in items(a:mru)
+        let bname = winbufnr(winid)->bufname()
+        if empty(bname)
+            continue
+        endif
+
+        if !has_key(session_mru, bname)
+            let session_mru[bname] = []
+        endif
+
+        let winbufs = map(copy(bufs), 'bufname(v:val)')
+        call add(session_mru[bname], winbufs)
+    endfor
+
+    return string(session_mru)
+endfunction
+
+function! LoadMruSession(session_mru_str)
+    let session_mru = eval(a:session_mru_str)
+
+    let mru = {}
+
+    for [curbuf, bufs] in items(session_mru)
+        let curbufnum = bufnr(curbuf)
+        if curbufnum == -1
+            " hidden buffers didn't get saved, and this window didn't get saved, skip it
+            continue
+        endif
+
+        let winids = win_findbuf(curbufnum)
+        if empty(winids)
+            " this window didn't get saved, skip it
+            continue
+        endif
+
+        for wid in winids
+            if empty(bufs)
+                " there are somehow more windows with this buffer in the session than in the MRU
+                " list? leave the later windows alone
+                break
+            endif
+
+            let my_bufs = remove(bufs, 0)
+            call map(my_bufs, 'bufnr(v:val)')
+            call filter(my_bufs, 'v:val != -1')
+
+            let mru[wid] = my_bufs
+        endfor
+    endfor
+
+    return mru
+endfunction
+
 function! s:enable_mru()
     if !exists('g:misdreavus_mru')
         let g:misdreavus_mru = {}
@@ -159,6 +255,9 @@ function! s:enable_mru()
         autocmd BufLeave * call <sid>leave_buf(win_getid())
         autocmd BufDelete * call <sid>delete_buf(expand("<abuf>"))
         autocmd WinEnter * call <sid>clean_mru()
+
+        autocmd User SessionSavePre call <sid>save_mru_session()
+        autocmd SessionLoadPost * call <sid>load_mru_session()
     augroup END
 endfunction
 
