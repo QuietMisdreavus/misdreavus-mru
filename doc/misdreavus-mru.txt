@@ -1,0 +1,142 @@
+*misdreavus-mru.txt* A most-recently-used buffer list
+
+INTRODUCTION					*misdreavus-mru*
+
+This plugin provides a way to track the buffers you use in each window, in the
+order that they were accessed last. This information can then be displayed in
+the 'tabline', in an extra window, or via the |:Mru| command.
+
+==================================================================
+OPTIONS						*misdreavus-mru-options*
+
+
+g:misdreavus_mru_no_auto_enable		*g:misdreavus_mru_no_auto_enable*
+
+If this variable is defined and holds any value prior to this plugin being
+loaded, the MRU collection will be disabled. It can be manually enabled after
+the plugin is loaded by using the |:EnableMru| command.
+
+
+g:misdreavus_mru_rotate_count		*g:misdreavus_mru_rotate_count*
+
+This setting affects which buffer is loaded using the |<Plug>RotateMru|
+mapping. By default, this value is 3 (i.e. |<Plug>RotateMru| will load the
+third buffer in the list, or the one used before the |alternate-file|).
+Setting this to 2 makes <Plug>RotateMru act the same as |CTRL-^|. (Unless the
+|:keepalt| command was used to load a buffer without changing the alternate
+file - then |CTRL-^| and |<Plug>RotateMru| will load different buffers in that
+situation.)
+
+
+==================================================================
+COMMANDS					*misdreavus-mru-commands*
+
+
+:[count]Mru							*:Mru*
+:Mru [count]
+		Show the buffers in the current window's MRU list. Example:
+
+			%4:	version.c ~
+			#5:	/test/text ~
+			 1:	asdf ~
+			 2:	README.md ~
+
+		The current buffer is indicated by a `%`. The |alternate-file|
+		is indicated by a `#`.
+
+		Passing a [count] to this command will only print that many
+		items. Without a count (or with a count of zero), all the
+		entries will be printed.
+
+
+:EnableMru							*:EnableMru*
+		Enables the MRU tracking. Calling this after the plugin has
+		already been enabled has no effect.
+
+
+:DisableMru							*:DisableMru*
+		Disables the MRU tracking and clears out any existing MRU
+		lists.
+
+
+==================================================================
+MAPPINGS					*misdreavus-mru-mappings*
+
+
+<Plug>RotateMru					*<Plug>RotateMru*
+
+Using this mapping will load a buffer from the MRU list, as configured by
+|g:misdreavus_mru_rotate_count|. The plugin author recommends mapping CTRL-7,
+to mirror |CTRL-^|. This may show up as a different key to Vim:
+>
+	nmap <C-_> <Plug>RotateMru
+<
+(Use |CTRL-K| to verify what a special key looks like to Vim.)
+
+The function |RotateMru()| is also available to perform the same behavior.
+
+
+==================================================================
+FUNCTIONS					*misdreavus-mru-functions*
+
+
+RotateMru()					*RotateMru()*
+
+This function performs the same action as |<Plug>RotateMru|.
+
+
+==================================================================
+PLUGIN INTEGRATIONS				*misdreavus-mru-integrations*
+
+
+misdreavus-session				*misdreavus-mru-session*
+
+If |misdreavus-session| is used to save a session, misdreavus-mru will
+serialize the MRU lists into a String global *g:MisdreavusSessionMru* so that
+they can be saved in the session (if `'globals'` is added to
+'sessionoptions'). When that session file is loaded, the MRU lists will be
+loaded back up, so that any buffers that were saved in the session re-appear
+in the MRU lists in the same order they were in when the session was saved.
+
+
+==================================================================
+API						*misdreavus-mru-api*
+
+
+g:misdreavus_mru				*g:misdreavus_mru*
+
+This variable contains a |Dict|, mapping a |window-ID| to a list of buffer
+numbers. This is the primary data structure for misdreavus-mru - if it's
+removed using |:unlet|, the MRU tracking is disabled globally.
+
+The order of the buffer numbers in each entry determines the ordering shown in
+|:Mru| - the first number is the current buffer in that window, the second is
+the previous one, etc.
+
+
+SaveMruSession({mru-dict})			*SaveMruSession()*
+
+This processes the given MRU dictionary into a |String|, which is returned.
+The {mru-dict} is expected to be in the same format as |g:misdreavus_mru| -
+i.e. a dict mapping |window-ID|s to lists of buffer numbers.
+
+The resulting string is a serialized Dict mapping buffer names to a list of
+lists. If a buffer is displayed in multiple windows, there will be multiple
+MRU lists associated with it, and thus multiple lists in the resulting map.
+The lists are also saved as buffer names instead of buffer numbers, so that
+the MRU lists can be properly reconstructed later on when the session is
+loaded.
+
+To reconstruct the MRU structure, pass the resulting string to
+|LoadMruSession()|.
+
+
+LoadMruSession({session-mru})			*LoadMruSession()*
+
+This function loads a {session-mru} saved by |SaveMruSession()| and rebuilds
+the MRU dictionary structure from it, using the currently opened buffers and
+windows. The resulting dict is returned. To use the MRU lists with the rest of
+the misdreavus-mru functionality, assign it to |g:misdreavus_mru|.
+
+
+ vim:tw=78:ts=8:sts=0:sw=8:noet:ft=help:norl:
